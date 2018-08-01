@@ -11,11 +11,7 @@ namespace Recon.Core
 	[ApiController]
 	public class TestController : ControllerBase
 	{
-		Joystick joystick = new Joystick();
-
-		public TestController(WebsocketCollection greeter)
-		{
-		}
+		public TestController() { }
 
 		// GET: api/<controller>
 		[HttpGet]
@@ -29,31 +25,6 @@ namespace Recon.Core
 		public string Get(int id)
 		{
 			return "value" + id;
-		}
-
-		// GET: /api/requestdevice/ 
-		[HttpGet("RequestDevice/{deviceID}")]
-		public Dictionary<string, dynamic> Get(uint deviceID)
-		{
-			var deviceData = new Dictionary<string, dynamic>();
-			deviceData["token"] = HttpContext.TraceIdentifier;
-			deviceData["id"] = deviceID;
-			deviceData["acquired"] = joystick.AcquireDevice(deviceID);
-			if (deviceData["acquired"])
-			{
-				deviceData["numButtons"] = joystick.GetDeviceNumButtons(deviceID);
-				deviceData["numContPovs"] = joystick.GetDeviceNumContPovs(deviceID);
-				deviceData["numDiscPovs"] = joystick.GetDeviceNumDiscPovs(deviceID);
-
-				deviceData["axes"] = new Dictionary<int, bool>();
-				int[] axes = (int[])Enum.GetValues(typeof(HID_USAGES));
-				for (int i = 0; i < axes.Length; i++)
-				{
-					deviceData["axes"][i + 1] = joystick.IsDeviceAxisEnabled(deviceID, axes[i]);
-				}
-			}
-
-			return deviceData;
 		}
 	}
 }
