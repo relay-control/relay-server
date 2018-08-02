@@ -20,13 +20,6 @@ namespace Recon.Core
 		[ImportMany(typeof(IPluginController))]
 		IEnumerable<IPluginController> controllers;
 
-		private void Compose()
-		{
-			//var catalog = new DirectoryCatalog("plugins");
-			//CompositionContainer container = new CompositionContainer(catalog);
-			//container.SatisfyImportsOnce(this);
-		}
-
 		public void ConfigureServices(IServiceCollection services)
 		{
 			var catalog = new DirectoryCatalog("plugins");
@@ -43,7 +36,11 @@ namespace Recon.Core
 
 			services.AddCors();
 
-			services.AddSingleton<WebsocketCollection>();
+			services.AddSingleton<WebSocketCollection>();
+			services.AddSingleton<JoystickManager>();
+
+			services.AddSingleton<IInputMessageProcessor, KeyboardMessageProcessor>();
+			services.AddSingleton<IInputMessageProcessor, JoystickMessageProcessor>();
 		}
 
 		public void Configure(IApplicationBuilder app, IHostingEnvironment env)
@@ -55,16 +52,16 @@ namespace Recon.Core
 
 			app.UseCors(builder => builder.AllowAnyOrigin());
 
-			app.UseMvc();
-
 			app.UseWebSockets();
+
+			app.UseMvc();
 
 			foreach (var plugin in plugins)
 			{
 				plugin.Configure(app);
 			}
 
-			app.UseMiddleware<WebsocketManager>();
+			//app.UseMiddleware<WebSocketMiddleware>();
 
 			//app.Run(async (context) =>
 			//{
