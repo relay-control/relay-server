@@ -53,7 +53,7 @@
     <Compile Include="Keyboard.cs" />
     <Compile Include="Main.cs" />
     <Compile Include="Startup.cs" />
-    <Compile Include="WebsocketManager.cs" />
+    <Compile Include="WebSocketManager.cs" />
     <Compile Include="WebSocketController.cs" />
   </ItemGroup>
   <ItemGroup>

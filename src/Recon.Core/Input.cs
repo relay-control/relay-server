@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -37,12 +38,27 @@ namespace Recon.Core {
 		bool Process(InputMessage input);
 	}
 
+	public class InputMessageProcessor {
+		private readonly IEnumerable<IInputMessageProcessor> _inputMessageProcessors;
+
+		public InputMessageProcessor(IEnumerable<IInputMessageProcessor> inputMessageProcessors) {
+			_inputMessageProcessors = inputMessageProcessors;
+		}
+
+		public bool Process(InputMessage input) {
+			foreach (var processor in _inputMessageProcessors) {
+				if (processor.Process(input)) {
+					return true;
+				}
+			}
+			return false;
+		}
+	}
+
 	class KeyboardMessageProcessor : IInputMessageProcessor {
 		Keyboard keyboard = new Keyboard();
-		WebSocketCollection _webSocketCollection;
 
-		public KeyboardMessageProcessor(WebSocketCollection webSocketCollection) {
-			_webSocketCollection = webSocketCollection;
+		public KeyboardMessageProcessor() {
 		}
 
 		public bool Process(InputMessage input) {
@@ -60,26 +76,25 @@ namespace Recon.Core {
 	}
 
 	class JoystickMessageProcessor : IInputMessageProcessor {
-		JoystickManager joystick = new JoystickManager();
-		WebSocketCollection _webSocketCollection;
+		JoystickManager _joystickManager;
 
-		public JoystickMessageProcessor(WebSocketCollection webSocketCollection) {
-			_webSocketCollection = webSocketCollection;
+		public JoystickMessageProcessor(JoystickManager joystickManager) {
+			_joystickManager = joystickManager;
 		}
 
 		public bool Process(InputMessage input) {
 			if (input.Type == "button") {
 				Console.WriteLine("Button: {0}, state: {1}", input.Button, input.State);
 				if (input.State) {
-					joystick.PressButton(input.Device, input.Button);
+					_joystickManager.PressButton(input.Device, input.Button);
 				} else {
-					joystick.ReleaseButton(input.Device, input.Button);
+					_joystickManager.ReleaseButton(input.Device, input.Button);
 				}
 				return true;
 			}
 			if (input.Type == "axis") {
 				Console.WriteLine("Axis: {0}, value: {1}", input.Axis, input.Value);
-				joystick.SetAxis(input.Device, input.Axis, input.Value);
+				_joystickManager.SetAxis(input.Device, input.Axis, input.Value);
 				return true;
 			}
 			if (input.Type == "macro") {

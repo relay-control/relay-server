@@ -12,59 +12,102 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
 namespace Recon.Core {
-	class DeviceState {
-		public uint id { get; set; }
-		public bool acquired { get; set; }
-		public int numButtons { get; set; }
-		public int numContPovs { get; set; }
-		public int numDiscPovs { get; set; }
-		public Dictionary<int, bool> axes { get; set; }
-	}
-
-	class DeviceStateEvent {
-		public string eventType = "open";
-		public List<DeviceState> devices = new List<DeviceState> { };
-
-		public DeviceStateEvent(List<uint> _devices) {
-			foreach (var device in _devices) {
-				//devices.Add(new JoystickDevice(device).GetDeviceInfo());
-			}
+	class CamelCaseSerializer {
+		public static string Serialize(object value) {
+			return JsonConvert.SerializeObject(value, new JsonSerializerSettings() {
+				ContractResolver = new CamelCasePropertyNamesContractResolver(),
+			});
 		}
 	}
 
-	class Camel {
-		public static string Serialize(object o) {
-			var serializerSettings = new JsonSerializerSettings();
-			serializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
-			return JsonConvert.SerializeObject(o, serializerSettings);
-		}
-	}
-
-	class WebSocketConnection {
+	public class WebSocketConnection {
 		public WebSocket _webSocket;
-		public uint[] _devices;
+		public uint[] _ownedDevices;
 
 		public WebSocketConnection(WebSocket webSocket, uint[] devices) {
 			_webSocket = webSocket;
-			_devices = devices;
+			_ownedDevices = devices;
 		}
 
 		public async Task SendMessage(string message) {
-			await _webSocket.SendAsync(new ArraySegment<byte>(Encoding.ASCII.GetBytes(message), 0, message.Length), WebSocketMessageType.Text, true, CancellationToken.None);
+			var buffer = new ArraySegment<byte>(Encoding.ASCII.GetBytes(message), 0, message.Length);
+			await _webSocket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
 		}
 	}
 
 	public class WebSocketCollection {
-		JoystickManager _joystickManager;
+		public List<WebSocketConnection> _connections = new List<WebSocketConnection>();
 
-		List<object> connections = new List<object>();
-		Dictionary<uint, List<WebSocket>> deviceConnections = new Dictionary<uint, List<WebSocket>>();
-
-		public WebSocketCollection(JoystickManager joystickManager) {
-			_joystickManager = joystickManager;
+		public WebSocketConnection CreateConnection(WebSocket webSocket, uint[] devices) {
+			var socket = new WebSocketConnection(webSocket, devices);
+			_connections.Add(socket);
+			return socket;
 		}
 
-		public void Add(WebSocket webSocket, uint[] devices) {
+		public void DestroyConnection(WebSocketConnection connection) {
+			_connections.Remove(connection);
+		}
+	}
+
+	public class WebSocketManager {
+		private readonly InputMessageProcessor _inputMessageProcessor;
+		private readonly JoystickManager _joystickManager;
+
+		WebSocketCollection webSocketCollection = new WebSocketCollection();
+
+		public WebSocketManager(JoystickManager joystickManager, InputMessageProcessor inputMessageProcessor) {
+			_joystickManager = joystickManager;
+			_inputMessageProcessor = inputMessageProcessor;
+		}
+
+		public async Task OnConnected(WebSocket webSocket, uint[] devices) {
+			// register client with its requested devices
+			var connection = webSocketCollection.CreateConnection(webSocket, devices.Where(e => _joystickManager.AcquireDevice(e)).ToArray());
+
+			var message = CamelCaseSerializer.Serialize(GetOpenEvent(devices));
+			await connection.SendMessage(message);
+
+			await Receive(webSocket);
+
+			webSocketCollection.DestroyConnection(connection);
+
+			// once a device is no longer used by any clients it should get relinquished
+			foreach (var device in connection._ownedDevices) {
+				if (!IsDeviceInUse(device)) {
+					_joystickManager.RelinquishDevice(device);
+					Console.WriteLine("Relinquished device {0}", device);
+				}
+			}
+			//RelinquishUnusedDevices();
+		}
+
+		public async Task Receive(WebSocket webSocket) {
+			var buffer = new byte[1024 * 4];
+			var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+			while (!result.CloseStatus.HasValue) {
+				var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
+
+				var inputData = JsonConvert.DeserializeObject<InputMessage>(message);
+				if (_inputMessageProcessor.Process(inputData)) {
+					dynamic response = new ExpandoObject();
+					response.eventType = "state";
+					response.state = inputData;
+					var message2 = CamelCaseSerializer.Serialize(response);
+					await Broadcast(message2);
+				}
+
+				result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+			}
+			await webSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
+		}
+
+		public async Task Broadcast(string message) {
+			foreach (var connection in webSocketCollection._connections) {
+				await connection.SendMessage(message);
+			}
+		}
+
+		public dynamic GetOpenEvent(uint[] devices) {
 			//var response = new DeviceStateEvent(devices);
 			dynamic response = new ExpandoObject();
 			response.eventType = "open";
@@ -87,39 +130,14 @@ namespace Recon.Core {
 				}
 				response.devices.Add(deviceData);
 			}
-
-			WebSocketConnection socket = new WebSocketConnection(webSocket, devices);
-			connections.Add(socket);
-			var message = Camel.Serialize(response);
-			socket.SendMessage(message);
+			return response;
 		}
 
-		public void Remove(WebSocket webSocket) {
-			foreach (WebSocketConnection connection in connections) {
-				if (connection._webSocket == webSocket) {
-					connections.Remove(connection);
-					// once no more clients use a single device it may be relinquished
-					foreach (var device in connection._devices) {
-						deviceConnections[device].Remove(webSocket);
-						if (deviceConnections[device].Count == 0) {
-							_joystickManager.RelinquishDevice(device);
-							Console.WriteLine("Relinquished device {0}", device);
-						}
-					}
-				}
-			}
+		void RelinquishUnusedDevices() {
 		}
 
-		public void Broadcast(string key, bool state) {
-			foreach (WebSocketConnection connection in connections) {
-				dynamic response = new ExpandoObject();
-				response.eventType = "state";
-				response.key = key;
-				response.state = state;
-
-				var message = Camel.Serialize(response);
-				connection.SendMessage(message);
-			}
+		public bool IsDeviceInUse(uint device) {
+			return webSocketCollection._connections.Any(e => e._ownedDevices.Contains(device));
 		}
 	}
 }

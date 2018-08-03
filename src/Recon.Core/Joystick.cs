@@ -7,17 +7,15 @@ using vJoyInterfaceWrap;
 
 namespace Recon.Core {
 	public class JoystickManager {
-		vJoy joystick;
+		vJoy joystick = new vJoy();
 
 		public JoystickManager() {
-			joystick = new vJoy();
-
 			if (!joystick.vJoyEnabled()) {
 				Console.WriteLine("vJoy driver not enabled: Failed Getting vJoy attributes.");
 				return;
 			}
 
-			// Test if DLL matches the driver
+			// test if DLL matches the driver
 			uint DllVer = 0, DrvVer = 0;
 			bool match = joystick.DriverMatch(ref DllVer, ref DrvVer);
 			if (match)
@@ -64,14 +62,7 @@ namespace Recon.Core {
 			} else
 				Console.WriteLine("Acquired: vJoy device number {0}.", deviceID);
 
-			joystick.SetAxis(0x4000, deviceID, HID_USAGES.HID_USAGE_X);
-			joystick.SetAxis(0x4000, deviceID, HID_USAGES.HID_USAGE_Y);
-			joystick.SetAxis(0x4000, deviceID, HID_USAGES.HID_USAGE_Z);
-			joystick.SetAxis(0x4000, deviceID, HID_USAGES.HID_USAGE_RX);
-			joystick.SetAxis(0x4000, deviceID, HID_USAGES.HID_USAGE_RY);
-			joystick.SetAxis(0x4000, deviceID, HID_USAGES.HID_USAGE_RZ);
-			joystick.SetAxis(0x4000, deviceID, HID_USAGES.HID_USAGE_SL0);
-			joystick.SetAxis(0x4000, deviceID, HID_USAGES.HID_USAGE_SL1);
+			ResetDeviceAxes(deviceID);
 
 			return true;
 
@@ -89,6 +80,12 @@ namespace Recon.Core {
 			*/
 
 			// register device-client allocation
+		}
+
+		public void ResetDeviceAxes(uint deviceID) {
+			foreach (var axis in Enum.GetValues(typeof(HID_USAGES))) {
+				joystick.SetAxis(0x4000, deviceID, (HID_USAGES)axis);
+			}
 		}
 
 		public void RelinquishDevice(uint deviceID) {
