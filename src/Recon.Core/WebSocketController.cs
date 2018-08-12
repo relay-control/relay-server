@@ -16,7 +16,6 @@ namespace Recon.Core {
 		private readonly WebSocketManager _webSocketManager;
 
 		public WebSocketController(WebSocketManager webSocketManager) {
-			Console.WriteLine("WebSocketController");
 			_webSocketManager = webSocketManager;
 		}
 

@@ -50,7 +50,9 @@
   <ItemGroup>
     <Compile Include="Input.cs" />
     <Compile Include="Joystick.cs" />
+    <Compile Include="InputManagers\JoystickManager.cs" />
     <Compile Include="Keyboard.cs" />
+    <Compile Include="InputManagers\KeyboardManager.cs" />
     <Compile Include="Main.cs" />
     <Compile Include="Startup.cs" />
     <Compile Include="WebSocketManager.cs" />

@@ -5,41 +5,34 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Recon.Core
-{
-	class Keyboard
-	{
+namespace Recon.Core {
+	class Keyboard2 {
 		[DllImport("user32.dll")]
-		private static extern IntPtr GetKeyboardLayout(uint idThread);
-
-		[DllImport("user32.dll", SetLastError = true)]
-		private static extern uint SendInput(uint numberOfInputs, INPUT[] inputs, int sizeOfInputs);
-
-		[DllImport("user32.dll", CharSet = CharSet.Auto)]
-		private static extern ushort MapVirtualKey(uint uCode, uint uMapType);
-
-		[DllImport("user32.dll", CharSet = CharSet.Unicode)]
-		static extern short VkKeyScanEx(char ch, IntPtr dwhkl);
-
-		[DllImport("user32.dll")]
-		private static extern IntPtr GetForegroundWindow();
+		static extern IntPtr GetForegroundWindow();
 
 		[DllImport("user32.dll")]
 		static extern uint GetWindowThreadProcessId(IntPtr hwnd, IntPtr process);
 
-		// will allow for keyboard + mouse/tablet input within one SendInput call, or two mouse events
-		private static INPUT[] sendInputs = new INPUT[2];
+		[DllImport("user32.dll")]
+		static extern IntPtr GetKeyboardLayout(uint idThread);
+
+		[DllImport("user32.dll", CharSet = CharSet.Auto)]
+		static extern ushort MapVirtualKey(uint uCode, uint uMapType);
+
+		[DllImport("user32.dll", CharSet = CharSet.Unicode)]
+		static extern short VkKeyScanEx(char ch, IntPtr dwhkl);
+
+		[DllImport("user32.dll", SetLastError = true)]
+		static extern uint SendInput(uint numberOfInputs, INPUT[] inputs, int sizeOfInputs);
 
 		[StructLayout(LayoutKind.Sequential)]
-		internal struct INPUT
-		{
+		internal struct INPUT {
 			public uint Type;
 			public MOUSEKEYBDHARDWAREINPUT Data;
 		}
 
 		[StructLayout(LayoutKind.Explicit)]
-		internal struct MOUSEKEYBDHARDWAREINPUT
-		{
+		internal struct MOUSEKEYBDHARDWAREINPUT {
 			[FieldOffset(0)]
 			public HARDWAREINPUT Hardware;
 			[FieldOffset(0)]
@@ -49,16 +42,14 @@ namespace Recon.Core
 		}
 
 		[StructLayout(LayoutKind.Sequential)]
-		internal struct HARDWAREINPUT
-		{
+		internal struct HARDWAREINPUT {
 			public uint Msg;
 			public ushort ParamL;
 			public ushort ParamH;
 		}
 
 		[StructLayout(LayoutKind.Sequential)]
-		internal struct KEYBDINPUT
-		{
+		internal struct KEYBDINPUT {
 			public ushort Vk;
 			public ushort Scan;
 			public uint Flags;
@@ -67,8 +58,7 @@ namespace Recon.Core
 		}
 
 		[StructLayout(LayoutKind.Sequential)]
-		internal struct MOUSEINPUT
-		{
+		internal struct MOUSEINPUT {
 			public int X;
 			public int Y;
 			public uint MouseData;
@@ -103,57 +93,50 @@ namespace Recon.Core
 			MAPVK_VK_TO_VSC = 0,
 			EXTENDED_FLAG = 0x100;
 
-		public Keyboard()
-		{
-			//CultureInfo cultureInfo = CultureInfo.GetCultureInfo("en-US");
-			//pointer = LoadKeyboardLayout(cultureInfo.KeyboardLayoutId.ToString("X8"), 1);
-			IntPtr pointer = GetKeyboardLayout(0);
-			Console.WriteLine("0x{0:x}", pointer.ToString("x"));
+		// will allow for keyboard + mouse/tablet input within one SendInput call, or two mouse events
+		INPUT[] sendInputs = new INPUT[4];
+
+		//public Keyboard()
+		//{
+		//CultureInfo cultureInfo = CultureInfo.GetCultureInfo("en-US");
+		//pointer = LoadKeyboardLayout(cultureInfo.KeyboardLayoutId.ToString("X8"), 1);
+		//	IntPtr pointer = GetKeyboardLayout(0);
+		//	Console.WriteLine("0x{0:x}", pointer.ToString("x"));
+		//}
+
+		public void PressKey(string key) {
+			BuildKeyboardEvent(ref sendInputs[0], key);
+			uint result = SendInput(1, sendInputs, Marshal.SizeOf(sendInputs[0]));
 		}
 
-		public void PressKey(string key)
-		{
+		public void ReleaseKey(string key) {
+			BuildKeyboardEvent(ref sendInputs[0], key);
+			sendInputs[0].Data.Keyboard.Flags |= KEYEVENTF_KEYUP;
+			uint result = SendInput(1, sendInputs, Marshal.SizeOf(sendInputs[0]));
+		}
+
+		void BuildKeyboardEvent(ref INPUT input, string key) {
 			IntPtr hWnd = GetForegroundWindow();
 			uint lpdwProcessId = GetWindowThreadProcessId(hWnd, IntPtr.Zero);
 			IntPtr pointer = GetKeyboardLayout(lpdwProcessId);
-			Console.WriteLine("0x{0:x}", pointer.ToString("x"));
+
+			Console.WriteLine("Keyboard layout: 0x{0:x}", pointer.ToString("x"));
 			ushort virtualKey = (ushort)(VkKeyScanEx(key[0], pointer) & 0xff);
-			Console.WriteLine("0x{0:x}", virtualKey);
+			Console.WriteLine("Virtual key: 0x{0:x}", virtualKey);
 			//ushort scancode = scancodeFromVK(key);
 			ushort scancode = MapVirtualKey(virtualKey, MAPVK_VK_TO_VSC);
+			Console.WriteLine("Scan code: 0x{0:x}", scancode);
 			bool extended = (scancode & 0x100) != 0;
 			uint curflags = extended ? KEYEVENTF_EXTENDEDKEY : 0;
 
-			sendInputs[0].Type = INPUT_KEYBOARD;
-			sendInputs[0].Data.Keyboard.ExtraInfo = IntPtr.Zero;
-			sendInputs[0].Data.Keyboard.Flags = curflags;
-			sendInputs[0].Data.Keyboard.Scan = scancode;
-			//sendInputs[0].Data.Keyboard.Flags = 1;
-			//sendInputs[0].Data.Keyboard.Scan = 0;
-			sendInputs[0].Data.Keyboard.Time = 0;
-			sendInputs[0].Data.Keyboard.Vk = virtualKey;
-			uint result = SendInput(1, sendInputs, Marshal.SizeOf(sendInputs[0]));
-		}
-
-		public void ReleaseKey(string key)
-		{
-			IntPtr pointer = GetKeyboardLayout(0);
-
-			ushort virtualKey = (ushort)(VkKeyScanEx(key[0], pointer) & 0xff);
-			//ushort scancode = scancodeFromVK(key);
-			ushort scancode = MapVirtualKey(virtualKey, MAPVK_VK_TO_VSC);
-			bool extended = (scancode & 0x100) != 0;
-			uint curflags = extended ? KEYEVENTF_EXTENDEDKEY : 0;
-
-			sendInputs[0].Type = INPUT_KEYBOARD;
-			sendInputs[0].Data.Keyboard.ExtraInfo = IntPtr.Zero;
-			sendInputs[0].Data.Keyboard.Flags = curflags | KEYEVENTF_KEYUP;
-			sendInputs[0].Data.Keyboard.Scan = scancode;
-			//sendInputs[0].Data.Keyboard.Flags = KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP;
-			//sendInputs[0].Data.Keyboard.Scan = 0;
-			sendInputs[0].Data.Keyboard.Time = 0;
-			sendInputs[0].Data.Keyboard.Vk = virtualKey;
-			uint result = SendInput(1, sendInputs, Marshal.SizeOf(sendInputs[0]));
+			input.Type = INPUT_KEYBOARD;
+			input.Data.Keyboard.ExtraInfo = IntPtr.Zero;
+			input.Data.Keyboard.Flags = curflags;
+			input.Data.Keyboard.Scan = scancode;
+			//input.Data.Keyboard.Flags = KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP;
+			//input.Data.Keyboard.Scan = 0;
+			input.Data.Keyboard.Time = 0;
+			input.Data.Keyboard.Vk = virtualKey;
 		}
 	}
 }

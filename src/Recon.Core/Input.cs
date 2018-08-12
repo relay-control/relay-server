@@ -34,75 +34,21 @@ namespace Recon.Core {
 		public byte Value { get; set; }
 	}
 
+	public class Input : InputMessage {
+		public uint DeviceID { get; set; }
+	}
+
 	public interface IInputMessageProcessor {
 		bool Process(InputMessage input);
 	}
 
-	public class InputMessageProcessor {
-		private readonly IEnumerable<IInputMessageProcessor> _inputMessageProcessors;
-
-		public InputMessageProcessor(IEnumerable<IInputMessageProcessor> inputMessageProcessors) {
-			_inputMessageProcessors = inputMessageProcessors;
-		}
-
-		public bool Process(InputMessage input) {
-			foreach (var processor in _inputMessageProcessors) {
-				if (processor.Process(input)) {
-					return true;
-				}
-			}
-			return false;
-		}
+	public interface InputDevice {
+		void Process(Input input);
+		void OnConnected(WebSocketConnection connection);
+		void OnDisconnected();
 	}
 
-	class KeyboardMessageProcessor : IInputMessageProcessor {
-		Keyboard keyboard = new Keyboard();
-
-		public KeyboardMessageProcessor() {
-		}
-
-		public bool Process(InputMessage input) {
-			if (input.Type == "key") {
-				Console.WriteLine("Key: {0}, state: {1}", input.Key, input.State);
-				if (input.State) {
-					keyboard.PressKey(input.Key);
-				} else {
-					keyboard.ReleaseKey(input.Key);
-				}
-				return true;
-			}
-			return false;
-		}
-	}
-
-	class JoystickMessageProcessor : IInputMessageProcessor {
-		JoystickManager _joystickManager;
-
-		public JoystickMessageProcessor(JoystickManager joystickManager) {
-			_joystickManager = joystickManager;
-		}
-
-		public bool Process(InputMessage input) {
-			if (input.Type == "button") {
-				Console.WriteLine("Button: {0}, state: {1}", input.Button, input.State);
-				if (input.State) {
-					_joystickManager.PressButton(input.Device, input.Button);
-				} else {
-					_joystickManager.ReleaseButton(input.Device, input.Button);
-				}
-				return true;
-			}
-			if (input.Type == "axis") {
-				Console.WriteLine("Axis: {0}, value: {1}", input.Axis, input.Value);
-				_joystickManager.SetAxis(input.Device, input.Axis, input.Value);
-				return true;
-			}
-			if (input.Type == "macro") {
-				// yes let's clam
-				return true;
-			}
-			// send changes to clients that use the same device
-			return false;
-		}
+	public interface IInputManager {
+		InputDevice CreateDevice();
 	}
 }

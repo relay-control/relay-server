@@ -38,10 +38,13 @@ namespace Recon.Core {
 			services.AddSingleton<WebSocketManager>();
 			services.AddSingleton<JoystickManager>();
 
-			services.AddSingleton<InputMessageProcessor>();
+			//services.AddSingleton<InputMessageProcessor>();
 
-			services.AddSingleton<IInputMessageProcessor, KeyboardMessageProcessor>();
-			services.AddSingleton<IInputMessageProcessor, JoystickMessageProcessor>();
+			//services.AddSingleton<IInputMessageProcessor, KeyboardMessageProcessor>();
+			//services.AddSingleton<IInputMessageProcessor, JoystickMessageProcessor>();
+
+			services.AddSingleton<IInputManager, KeyboardManager>();
+			services.AddSingleton<IInputManager, JoystickMgr>();
 		}
 
 		public void Configure(IApplicationBuilder app, IHostingEnvironment env) {
