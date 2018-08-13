@@ -55,6 +55,7 @@
     <Compile Include="InputManagers\KeyboardManager.cs" />
     <Compile Include="Main.cs" />
     <Compile Include="Startup.cs" />
+    <Compile Include="VirtualKey.cs" />
     <Compile Include="WebSocketManager.cs" />
     <Compile Include="WebSocketController.cs" />
   </ItemGroup>
