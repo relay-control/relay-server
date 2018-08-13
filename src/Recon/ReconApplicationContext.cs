@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,6 +19,7 @@ namespace Recon
 			//notifyIcon.Click += (s, e) => notifyIcon.ShowBalloonTip(0);
 			notifyIcon.Text = "Recon";
 			//notifyIcon.Icon = Properties.Resources.AppIcon;
+			notifyIcon.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
 			notifyIcon.ContextMenu = new ContextMenu(new MenuItem[] { exitMenuItem });
 			notifyIcon.BalloonTipTitle = "Balloon Tip Title";
 			notifyIcon.BalloonTipText = "Balloon Tip Text.";
