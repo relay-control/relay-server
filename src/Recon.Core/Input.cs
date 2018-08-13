@@ -32,6 +32,10 @@ namespace Recon.Core {
 
 		public byte Axis { get; set; }
 		public byte Value { get; set; }
+
+		public int Delay { get; set; }
+
+		public Input[] Actions { get; set; }
 	}
 
 	public class Input : InputMessage {

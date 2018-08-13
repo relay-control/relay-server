@@ -7,7 +7,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
@@ -21,9 +20,11 @@ namespace Recon.Core {
 	}
 
 	public class WebSocketConnection {
-		public WebSocket _webSocket;
-		public List<InputDevice> devices = new List<InputDevice> { };
+		WebSocket _webSocket;
+		List<InputDevice> devices = new List<InputDevice> { };
 		public uint[] _ownedDevices;
+
+		MacroManager macroManager = new MacroManager();
 
 		public WebSocketConnection(WebSocket webSocket, IEnumerable<IInputManager> inputManagers, uint[] devices) {
 			_webSocket = webSocket;
@@ -31,6 +32,7 @@ namespace Recon.Core {
 			foreach (var v in inputManagers) {
 				this.devices.Add(v.CreateDevice());
 			}
+			this.devices.Add(macroManager.CreateDevice(this.devices));
 			this.devices.ForEach(i => i.OnConnected(this));
 		}
 
@@ -51,6 +53,8 @@ namespace Recon.Core {
 				result = await _webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
 			}
 			await _webSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
+
+			devices.ForEach(i => i.OnDisconnected());
 		}
 	}
 
@@ -83,8 +87,6 @@ namespace Recon.Core {
 			await connection.Receive();
 
 			webSocketCollection.DestroyConnection(connection);
-
-			connection.devices.ForEach(i => i.OnDisconnected());
 		}
 
 		public async Task Broadcast(string message) {
