@@ -94,7 +94,7 @@ namespace Recon.Core {
 			EXTENDED_FLAG = 0x100;
 
 		// will allow for keyboard + mouse/tablet input within one SendInput call, or two mouse events
-		INPUT[] sendInputs = new INPUT[4];
+		INPUT[] input = new INPUT[4];
 
 		//public Keyboard()
 		//{
@@ -104,39 +104,50 @@ namespace Recon.Core {
 		//	Console.WriteLine("0x{0:x}", pointer.ToString("x"));
 		//}
 
+		void SendInput(INPUT[] input) {
+			SendInput((uint)input.Length, input, Marshal.SizeOf<INPUT>());
+		}
+
 		public void PressKey(string key) {
-			BuildKeyboardEvent(ref sendInputs[0], key);
-			uint result = SendInput(1, sendInputs, Marshal.SizeOf(sendInputs[0]));
+			var input = BuildKeyboardEvent(key);
+			SendInput(input);
 		}
 
 		public void ReleaseKey(string key) {
-			BuildKeyboardEvent(ref sendInputs[0], key);
-			sendInputs[0].Data.Keyboard.Flags |= KEYEVENTF_KEYUP;
-			uint result = SendInput(1, sendInputs, Marshal.SizeOf(sendInputs[0]));
+			var input = BuildKeyboardEvent(key);
+			input[0].Data.Keyboard.Flags |= KEYEVENTF_KEYUP;
+			SendInput(input);
 		}
 
-		void BuildKeyboardEvent(ref INPUT input, string key) {
+		INPUT[] BuildKeyboardEvent(string key) {
 			IntPtr hWnd = GetForegroundWindow();
 			uint lpdwProcessId = GetWindowThreadProcessId(hWnd, IntPtr.Zero);
 			IntPtr pointer = GetKeyboardLayout(lpdwProcessId);
 
-			Console.WriteLine("Keyboard layout: 0x{0:x}", pointer.ToString("x"));
-			ushort virtualKey = (ushort)(VkKeyScanEx(key[0], pointer) & 0xff);
-			Console.WriteLine("Virtual key: 0x{0:x}", virtualKey);
-			//ushort scancode = scancodeFromVK(key);
+			ushort virtualKey;
+			if (Enum.IsDefined(typeof(VirtualKey), key))
+				virtualKey = (ushort)(VirtualKey)Enum.Parse(typeof(VirtualKey), key);
+			else
+				virtualKey = (ushort)(VkKeyScanEx(key[0], pointer) & 0xff);
 			ushort scancode = MapVirtualKey(virtualKey, MAPVK_VK_TO_VSC);
-			Console.WriteLine("Scan code: 0x{0:x}", scancode);
+			//ushort scancode = scancodeFromVK(key);
+
+			//Console.WriteLine("Keyboard layout: 0x{0:x}", pointer.ToString("x"));
+			//Console.WriteLine("Virtual key: 0x{0:x}", virtualKey);
+			//Console.WriteLine("Scan code: 0x{0:x}", scancode);
+
 			bool extended = (scancode & 0x100) != 0;
 			uint curflags = extended ? KEYEVENTF_EXTENDEDKEY : 0;
 
-			input.Type = INPUT_KEYBOARD;
-			input.Data.Keyboard.ExtraInfo = IntPtr.Zero;
-			input.Data.Keyboard.Flags = curflags;
-			input.Data.Keyboard.Scan = scancode;
-			//input.Data.Keyboard.Flags = KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP;
-			//input.Data.Keyboard.Scan = 0;
-			input.Data.Keyboard.Time = 0;
-			input.Data.Keyboard.Vk = virtualKey;
+			input[0].Type = INPUT_KEYBOARD;
+			input[0].Data.Keyboard.ExtraInfo = IntPtr.Zero;
+			//input[0].Data.Keyboard.Flags = KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP;
+			input[0].Data.Keyboard.Flags = curflags;
+			input[0].Data.Keyboard.Scan = scancode;
+			input[0].Data.Keyboard.Time = 0;
+			input[0].Data.Keyboard.Vk = virtualKey;
+
+			return input;
 		}
 	}
 }
