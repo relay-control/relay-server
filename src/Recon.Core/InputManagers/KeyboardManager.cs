@@ -14,6 +14,15 @@ namespace Recon.Core {
 
 		public void OnConnected(WebSocketConnection connection) { }
 
+		public void OnDisconnected() {
+			foreach (var key in pressedKeys) {
+				var args = new KeyEventArgs();
+				args.Key = key;
+				OnKeyReleased(args);
+			}
+			pressedKeys.Clear();
+		}
+
 		public void Process(Input input) {
 			if (input.Type == "key") {
 				Console.WriteLine("Key: {0}, state: {1}", input.Key, input.State);
@@ -40,10 +49,6 @@ namespace Recon.Core {
 			var args = new KeyEventArgs();
 			args.Key = key;
 			OnKeyReleased(args);
-		}
-
-		public void OnDisconnected() {
-			pressedKeys.ForEach(key => ReleaseKey(key));
 		}
 
 		public bool IsKeyPressed(string key) {
@@ -81,7 +86,7 @@ namespace Recon.Core {
 		}
 
 		void OnKeyReleased(object kbd, KeyEventArgs e) {
-			if (keyboards.Any(kbd2 => kbd2.IsKeyPressed(e.Key))) {
+			if (keyboards.Any(kbd2 => kbd2 != kbd && kbd2.IsKeyPressed(e.Key))) {
 				return;
 			}
 			ReleaseKey(e.Key);
