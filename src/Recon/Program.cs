@@ -13,7 +13,7 @@ namespace Recon
 		static void Main(string[] args)
 		{
 			ReconServer server = new ReconServer(new string[]{});
-			Task.Run(() => server.Run());
+			Task.Factory.StartNew(() => server.Run(), TaskCreationOptions.LongRunning);
 
 			Application.EnableVisualStyles();
 			Application.SetCompatibleTextRenderingDefault(false);
