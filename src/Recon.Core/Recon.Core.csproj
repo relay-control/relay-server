@@ -300,6 +300,8 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="libs\vJoy\vJoyInterface.dll" />
+    <Content Include="libs\vJoy\vJoyInterfaceWrap.dll" />
     <Content Include="Packages.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

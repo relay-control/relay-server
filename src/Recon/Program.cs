@@ -6,13 +6,10 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using Recon.Core;
 
-namespace Recon
-{
-	class Program
-	{
-		static void Main(string[] args)
-		{
-			ReconServer server = new ReconServer(new string[]{});
+namespace Recon {
+	class Program {
+		static void Main(string[] args) {
+			ReconServer server = new ReconServer(new string[] { });
 			Task.Factory.StartNew(() => server.Run(), TaskCreationOptions.LongRunning);
 
 			Application.EnableVisualStyles();
