@@ -35,6 +35,9 @@ namespace Recon.Core {
 
 		public int Delay { get; set; }
 
+		public string Command { get; set; }
+		public string Args { get; set; }
+
 		public Input[] Actions { get; set; }
 	}
 

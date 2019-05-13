@@ -39,6 +39,7 @@ namespace Recon.Core {
 
 			services.AddSingleton<IInputManager, KeyboardManager>();
 			services.AddSingleton<IInputManager, JoystickMgr>();
+			services.AddSingleton<IInputManager, CommandManager>();
 		}
 
 		public void Configure(IApplicationBuilder app, IHostingEnvironment env) {

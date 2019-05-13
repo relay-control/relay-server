@@ -49,6 +49,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Input.cs" />
+    <Compile Include="InputManagers\CommandManager.cs" />
     <Compile Include="InputManagers\MacroManager.cs" />
     <Compile Include="Joystick.cs" />
     <Compile Include="InputManagers\JoystickManager.cs" />
