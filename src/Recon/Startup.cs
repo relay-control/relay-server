@@ -1,66 +1,55 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
-using System.ComponentModel.Composition.Hosting;
-using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
-using Recon.PluginInterface;
+using System.IO;
+using Microsoft.Extensions.FileProviders;
 
-namespace Recon.Core {
-	class Startup {
-		[ImportMany]
-		IEnumerable<IPluginMiddleware> plugins;
-
-		[ImportMany(typeof(IPluginController))]
-		IEnumerable<IPluginController> controllers;
+namespace Recon {
+	public class Startup {
+		internal static string PanelDirectory => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Recon");
 
 		public void ConfigureServices(IServiceCollection services) {
-			var builder = services.AddMvcCore()
-				.AddJsonFormatters();
+			services.AddCors(options => {
+				options.AddDefaultPolicy(builder => builder.AllowAnyOrigin());
+			});
+			services.AddRouting();
+			services.AddSignalR();
 
-			if (Directory.Exists("plugins")) {
-				var catalog = new DirectoryCatalog("plugins");
-				var container = new CompositionContainer(catalog);
-				container.SatisfyImportsOnce(this);
+			services.AddSingleton<InputProcessor>();
+			services.AddSingleton<JoystickCollection>();
 
-				foreach (var item in controllers.Select(x => x.GetType().Assembly).Distinct()) {
-					builder.AddApplicationPart(item);
-				}
-			}
+			services.AddSingleton<MacroProcessor>();
+			services.AddSingleton<IInputProcessor, KeyboardProcessor>();
+			services.AddSingleton<IInputProcessor, ButtonProcessor>();
+			services.AddSingleton<IInputProcessor, AxisProcessor>();
+			services.AddSingleton<IInputProcessor, CommandProcessor>();
 
-			services.AddCors();
-
-			services.AddSingleton<WebSocketManager>();
-
-			services.AddSingleton<IInputManager, KeyboardManager>();
-			services.AddSingleton<IInputManager, JoystickMgr>();
-			services.AddSingleton<IInputManager, CommandManager>();
+			services.AddSingleton<PanelHosting>();
 		}
 
-		public void Configure(IApplicationBuilder app, IHostingEnvironment env) {
-			if (env.IsDevelopment()) {
-				app.UseDeveloperExceptionPage();
-			}
+		public void Configure(IApplicationBuilder app, IWebHostEnvironment env) {
+			app.UseCors();
+			app.UseRouting();
 
-			app.UseCors(builder => builder.AllowAnyOrigin());
-			app.UseWebSockets();
-			app.UseMvc();
-
-			if (Directory.Exists("plugins")) {
-				foreach (var plugin in plugins) {
-					plugin.Configure(app);
+			// hosting
+			app.UseStaticFiles(new StaticFileOptions() {
+				RequestPath = "/panels",
+				FileProvider = new PhysicalFileProvider(PanelDirectory),
+				OnPrepareResponse = ctx => {
+					ctx.Context.Response.Headers.Append("Cache-Control", "no-cache");
 				}
-			}
+			});
+			//
 
-			//app.Run(async (context) =>
-			//{
-			//	await context.Response.WriteAsync("Hello World!");
-			//});
+			app.UseEndpoints(endpoints => {
+				endpoints.MapHub<InputHub>("/inputhub");
+			});
 		}
 	}
 }

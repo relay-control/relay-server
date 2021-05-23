@@ -1,33 +1,35 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
-namespace Recon.Core {
-	class CommandEventArgs : EventArgs {
+namespace Recon {
+	class CommandMessage {
 		public string Command { get; set; }
 		public string Args { get; set; }
 	}
 
-	class Command : InputDevice {
-		public void Process(Input input) {
-			if (input.Type != "command") return;
-			System.Diagnostics.Process.Start(input.Command, input.Args);
+	class CommandProcessor : IInputProcessor {
+		public InputType InputType { get; } = InputType.Command;
+		private readonly ILogger _logger;
+
+		public CommandProcessor(ILogger<InputHub> logger) {
+			_logger = logger;
 		}
 
-		public void OnConnected(WebSocketConnection connection) {
+		public void Process(InputMessageConverter inputMessage) {
+			var input = inputMessage.GetInputDescriptor<CommandMessage>();
 
-		}
-
-		public void OnDisconnected() {
-
-		}
-	}
-
-	class CommandManager : IInputManager {
-		public InputDevice CreateDevice() {
-			return new Command();
+			var startInfo = new ProcessStartInfo {
+				FileName = input.Command,
+				Arguments = input.Args,
+				UseShellExecute = true,
+			};
+			System.Diagnostics.Process.Start(startInfo);
+			_logger.LogInformation($"Command: {input.Command} {input.Args}");
 		}
 	}
 }

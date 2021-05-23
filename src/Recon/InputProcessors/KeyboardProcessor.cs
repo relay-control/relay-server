@@ -3,105 +3,34 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using GhostKeyboard;
+using Microsoft.Extensions.Logging;
 
-namespace Recon.Core {
-	class KeyEventArgs : EventArgs {
+namespace Recon {
+	class KeyboardMessage {
 		public string Key { get; set; }
+		public int Modifiers { get; set; }
+		public bool IsPressed { get; set; }
 	}
 
-	class Keyboard : InputDevice {
-		List<string> pressedKeys = new List<string> { };
+	class KeyboardProcessor : IInputProcessor {
+		public InputType InputType { get; } = InputType.Key;
+		private readonly ILogger _logger;
 
-		public void OnConnected(WebSocketConnection connection) { }
+		public KeyboardProcessor(ILogger<InputHub> logger) {
+			_logger = logger;
+		}
 
-		public void OnDisconnected() {
-			foreach (var key in pressedKeys) {
-				var args = new KeyEventArgs();
-				args.Key = key;
-				OnKeyReleased(args);
+		public void Process(InputMessageConverter inputMessage) {
+			var input = inputMessage.GetInputDescriptor<KeyboardMessage>();
+
+			var virtualKey = KeyChord.GetVirtualKey(input.Key);
+			if (virtualKey != 0) {
+				Keyboard.SetKey(virtualKey, (ModifierKeys)input.Modifiers, input.IsPressed);
+			} else {
+				Keyboard.SetKey(input.Key[0], (ModifierKeys)input.Modifiers, input.IsPressed);
 			}
-			pressedKeys.Clear();
+			_logger.LogInformation($"Key: {input.Key} {input.IsPressed}");
 		}
-
-		public void Process(Input input) {
-			if (input.Type == "key") {
-				Console.WriteLine("Key: {0}, state: {1}", input.Key, input.State);
-				if (input.State) {
-					PressKey(input.Key);
-				} else {
-					ReleaseKey(input.Key);
-				}
-			}
-		}
-
-		void PressKey(string key) {
-			pressedKeys.Add(key);
-			var args = new KeyEventArgs();
-			args.Key = key;
-			OnKeyPressed(args);
-		}
-
-		void ReleaseKey(string key) {
-			pressedKeys.Remove(key);
-			if (pressedKeys.Contains(key)) {
-				return;
-			}
-			var args = new KeyEventArgs();
-			args.Key = key;
-			OnKeyReleased(args);
-		}
-
-		public bool IsKeyPressed(string key) {
-			return pressedKeys.Contains(key);
-		}
-
-		public event EventHandler<KeyEventArgs> KeyPressed;
-
-		protected virtual void OnKeyPressed(KeyEventArgs e) {
-			KeyPressed?.Invoke(this, e);
-		}
-
-		public event EventHandler<KeyEventArgs> KeyReleased;
-
-		protected virtual void OnKeyReleased(KeyEventArgs e) {
-			KeyReleased?.Invoke(this, e);
-		}
-	}
-
-	class KeyboardManager : IInputManager {
-		Keyboard2 keyboard = new Keyboard2();
-
-		List<Keyboard> keyboards = new List<Keyboard> { };
-
-		public InputDevice CreateDevice() {
-			var keyboard = new Keyboard();
-			keyboards.Add(keyboard);
-			keyboard.KeyPressed += OnKeyPressed;
-			keyboard.KeyReleased += OnKeyReleased;
-			return keyboard;
-		}
-
-		void OnKeyPressed(object kbd, KeyEventArgs e) {
-			PressKey(e.Key);
-		}
-
-		void OnKeyReleased(object kbd, KeyEventArgs e) {
-			if (keyboards.Any(kbd2 => kbd2 != kbd && kbd2.IsKeyPressed(e.Key))) {
-				return;
-			}
-			ReleaseKey(e.Key);
-		}
-
-		void PressKey(string key) {
-			SendInput(key);
-			keyboard.PressKey(key);
-		}
-
-		void ReleaseKey(string key) {
-			SendInput(key);
-			keyboard.ReleaseKey(key);
-		}
-
-		public static void SendInput(object input) { }
 	}
 }

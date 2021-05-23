@@ -8,27 +8,30 @@ using System.Windows.Forms;
 
 namespace Recon {
 	class ReconApplicationContext : ApplicationContext {
-		NotifyIcon notifyIcon = new NotifyIcon();
+		readonly NotifyIcon notifyIcon = new();
 
 		public ReconApplicationContext() {
-			MenuItem exitMenuItem = new MenuItem("Exit", Exit);
+			var menu = new ContextMenuStrip {
+				RenderMode = ToolStripRenderMode.System,
+				DefaultDropDownDirection = ToolStripDropDownDirection.BelowRight
+			};
 
-			//notifyIcon.Click += (s, e) => notifyIcon.ShowBalloonTip(0);
-			notifyIcon.Text = "Recon";
-			//notifyIcon.Icon = Properties.Resources.AppIcon;
+			var exitMenuItem = new ToolStripMenuItem("Exit", null, Exit);
+			menu.Items.Add(exitMenuItem);
+
 			notifyIcon.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
-			notifyIcon.ContextMenu = new ContextMenu(new MenuItem[] { exitMenuItem });
-			notifyIcon.BalloonTipTitle = "Balloon Tip Title";
-			notifyIcon.BalloonTipText = "Balloon Tip Text.";
+			notifyIcon.Text = "Recon server";
+			notifyIcon.ContextMenuStrip = menu;
 			notifyIcon.Visible = true;
-			//notifyIcon.ShowBalloonTip(0);
+
+			Application.ApplicationExit += OnApplicationExit;
+		}
+
+		private void OnApplicationExit(object sender, EventArgs e) {
+			notifyIcon.Visible = false;
 		}
 
 		void Exit(object sender, EventArgs e) {
-			// We must manually tidy up and remove the icon before we exit.
-			// Otherwise it will be left behind until the user mouses over.
-			notifyIcon.Visible = false;
-
 			Application.Exit();
 		}
 	}

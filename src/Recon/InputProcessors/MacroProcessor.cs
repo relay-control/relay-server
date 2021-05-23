@@ -4,34 +4,40 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
-namespace Recon.Core {
-	class Macro : InputDevice {
-		public List<InputDevice> devices;
-
-		public void OnConnected(WebSocketConnection connection) { }
-		public void OnDisconnected() { }
-
-		public void Process(Input input) {
-			if (input.Type != "macro") return;
-			Task.Run(() => {
-				foreach (var action in input.Actions) {
-					foreach (var device in devices) {
-						device.Process(action);
-					}
-					if (action.Type == "delay") {
-						Thread.Sleep(action.Delay);
-					}
-				}
-			});
-		}
+namespace Recon {
+	class MacroMessage {
+		public List<InputMessage> Actions { get; set; }
 	}
 
-	public class MacroManager {
-		public InputDevice CreateDevice(List<InputDevice> devices) {
-			var macroDevice = new Macro();
-			macroDevice.devices = devices;
-			return macroDevice;
+	class DelayMessage {
+		public int Delay { get; set; }
+	}
+
+	public class MacroProcessor {
+		private readonly ILogger _logger;
+		private readonly InputProcessor _inputProcessor;
+
+		public MacroProcessor(ILogger<InputHub> logger, InputProcessor inputProcessor) {
+			_logger = logger;
+			_inputProcessor = inputProcessor;
+		}
+
+		public void Process(InputMessage input2) {
+			var inputMessage = new InputMessageConverter(input2.ExtensionData);
+			var input = inputMessage.GetInputDescriptor<MacroMessage>();
+
+			foreach (var action in input.Actions) {
+				if (action.Type == InputType.Delay) {
+					var inputMessage3 = new InputMessageConverter(action.ExtensionData);
+					var input3 = inputMessage3.GetInputDescriptor<DelayMessage>();
+					_logger.LogInformation($"Delay: {input3.Delay}");
+					Thread.Sleep(input3.Delay);
+				} else {
+					_inputProcessor.Process(action);
+				}
+			}
 		}
 	}
 }
