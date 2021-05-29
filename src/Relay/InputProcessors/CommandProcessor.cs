@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
-namespace Recon {
+namespace Relay {
 	class CommandMessage {
 		public string Command { get; set; }
 		public string Args { get; set; }

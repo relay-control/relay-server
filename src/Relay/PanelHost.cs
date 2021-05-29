@@ -7,9 +7,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.FileProviders;
 
-namespace Recon {
+namespace Relay {
 	public class PanelHosting {
-		const string DirectoryName = "Recon";
+		const string DirectoryName = "Relay";
 		internal static string PanelDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), DirectoryName);
 
 		public PanelHosting() {

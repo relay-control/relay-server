@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using GhostKeyboard;
 using Microsoft.Extensions.Logging;
 
-namespace Recon {
+namespace Relay {
 	class KeyboardMessage {
 		public string Key { get; set; }
 		public int Modifiers { get; set; }

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using GhostJoystick;
 using Microsoft.Extensions.Logging;
 
-namespace Recon {
+namespace Relay {
 	class AxisMessage {
 		public int DeviceId { get; set; }
 		public Axis Axis { get; set; }

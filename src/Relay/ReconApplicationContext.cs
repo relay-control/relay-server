@@ -6,11 +6,11 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace Recon {
-	class ReconApplicationContext : ApplicationContext {
+namespace Relay {
+	class RelayApplicationContext : ApplicationContext {
 		readonly NotifyIcon notifyIcon = new();
 
-		public ReconApplicationContext() {
+		public RelayApplicationContext() {
 			var menu = new ContextMenuStrip {
 				RenderMode = ToolStripRenderMode.System,
 				DefaultDropDownDirection = ToolStripDropDownDirection.BelowRight
@@ -20,7 +20,7 @@ namespace Recon {
 			menu.Items.Add(exitMenuItem);
 
 			notifyIcon.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
-			notifyIcon.Text = "Recon server";
+			notifyIcon.Text = "Relay server";
 			notifyIcon.ContextMenuStrip = menu;
 			notifyIcon.Visible = true;
 

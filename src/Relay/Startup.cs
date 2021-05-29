@@ -10,9 +10,9 @@ using Microsoft.Extensions.DependencyInjection;
 using System.IO;
 using Microsoft.Extensions.FileProviders;
 
-namespace Recon {
+namespace Relay {
 	public class Startup {
-		internal static string PanelDirectory => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Recon");
+		internal static string PanelDirectory => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Relay");
 
 		public void ConfigureServices(IServiceCollection services) {
 			services.AddCors(options => {

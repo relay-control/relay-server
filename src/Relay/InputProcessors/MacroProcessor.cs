@@ -6,7 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
-namespace Recon {
+namespace Relay {
 	class MacroMessage {
 		public List<InputMessage> Actions { get; set; }
 	}

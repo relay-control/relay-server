@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
-namespace Recon {
+namespace Relay {
 	class JoystickMessage {
 		public int DeviceId { get; set; }
 		public int Button { get; set; }

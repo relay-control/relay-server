@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Recon {
+namespace Relay {
 	public class InputProcessor {
 		private readonly IEnumerable<IInputProcessor> _inputProcessors;
 

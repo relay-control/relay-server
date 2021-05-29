@@ -7,7 +7,7 @@ using GhostJoystick;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 
-namespace Recon {
+namespace Relay {
 	public interface IInputClient {
 		Task ReceiveMessage(string user, string message);
 	}

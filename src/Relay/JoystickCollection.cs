@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using GhostJoystick;
 
-namespace Recon {
+namespace Relay {
 	public class DeviceProperties {
 		public int Id { get; set; }
 		public bool IsAcquired { get; set; }
