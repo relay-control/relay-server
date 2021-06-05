@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="GhostJoystick" Version="0.1.0" />
+    <PackageReference Include="GhostJoystick" Version="0.1.1" />
     <PackageReference Include="GhostKeyboard" Version="0.2.0" />
     <PackageReference Include="WebApplication" Version="1.0.0" />
   </ItemGroup>
