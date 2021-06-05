@@ -27,6 +27,8 @@ namespace Relay {
 			var virtualKey = KeyChord.GetVirtualKey(input.Key);
 			if (virtualKey != 0) {
 				Keyboard.SetKey(virtualKey, (ModifierKeys)input.Modifiers, input.IsPressed);
+			} else if (input.Key.Length > 1) {
+				throw new ArgumentException($"Invalid input key '{input.Key}'.");
 			} else {
 				Keyboard.SetKey(input.Key[0], (ModifierKeys)input.Modifiers, input.IsPressed);
 			}

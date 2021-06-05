@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using GhostJoystick;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 
@@ -52,11 +51,19 @@ namespace Relay {
 			_joystickCollection.RelinquishDevice(deviceId, Context.ConnectionId);
 		}
 
-		public async Task SendInput(InputMessage input) {
-			if (input.Type == InputType.Macro) {
-				_macroProcessor.Process(input);
-			} else {
-				_inputProcessor.Process(input);
+		public async Task<InputResult> SendInput(InputMessage input) {
+			try {
+				if (input.Type == InputType.Macro) {
+					_macroProcessor.Process(input);
+				} else {
+					_inputProcessor.Process(input);
+				}
+				return new InputResult { Ok = true };
+			} catch (Exception e) {
+				return new InputResult {
+					Ok = false,
+					Message = e.Message,
+				};
 			}
 		}
 
