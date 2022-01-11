@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 
 namespace Relay;
@@ -16,21 +17,20 @@ public enum InputType {
 public class InputMessage {
 	public InputType Type { get; set; }
 	[JsonExtensionData]
-	public Dictionary<string, JsonElement> ExtensionData { get; set; }
+	public JsonObject ExtensionData { get; set; }
 }
 
 public class InputMessageConverter {
 	readonly JsonSerializerOptions SerializerOptions = new() {
 		PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
 	};
-	private readonly Dictionary<string, JsonElement> _extensionData;
+	private readonly JsonObject _extensionData;
 
-	public InputMessageConverter(Dictionary<string, JsonElement> extensionData) {
+	public InputMessageConverter(JsonObject extensionData) {
 		_extensionData = extensionData;
 	}
 
 	public T GetInputDescriptor<T>() where T : class, new() {
-		var json = JsonSerializer.Serialize(_extensionData);
-		return JsonSerializer.Deserialize<T>(json, SerializerOptions);
+		return JsonSerializer.Deserialize<T>(_extensionData, SerializerOptions);
 	}
 }
