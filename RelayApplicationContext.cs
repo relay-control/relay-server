@@ -1,38 +1,30 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
+﻿namespace Relay;
 
-namespace Relay {
-	class RelayApplicationContext : ApplicationContext {
-		readonly NotifyIcon notifyIcon = new();
+class RelayApplicationContext : ApplicationContext {
+	readonly NotifyIcon notifyIcon = new();
 
-		public RelayApplicationContext() {
-			var menu = new ContextMenuStrip {
-				RenderMode = ToolStripRenderMode.System,
-				DefaultDropDownDirection = ToolStripDropDownDirection.BelowRight
-			};
+	public RelayApplicationContext() {
+		var menu = new ContextMenuStrip {
+			RenderMode = ToolStripRenderMode.System,
+			DefaultDropDownDirection = ToolStripDropDownDirection.BelowRight,
+		};
 
-			var exitMenuItem = new ToolStripMenuItem("Exit", null, Exit);
-			menu.Items.Add(exitMenuItem);
+		var exitMenuItem = new ToolStripMenuItem("Exit", null, Exit);
+		menu.Items.Add(exitMenuItem);
 
-			notifyIcon.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
-			notifyIcon.Text = "Relay server";
-			notifyIcon.ContextMenuStrip = menu;
-			notifyIcon.Visible = true;
+		notifyIcon.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+		notifyIcon.Text = "Relay server";
+		notifyIcon.ContextMenuStrip = menu;
+		notifyIcon.Visible = true;
 
-			Application.ApplicationExit += OnApplicationExit;
-		}
+		Application.ApplicationExit += OnApplicationExit;
+	}
 
-		private void OnApplicationExit(object sender, EventArgs e) {
-			notifyIcon.Visible = false;
-		}
+	private void OnApplicationExit(object sender, EventArgs e) {
+		notifyIcon.Visible = false;
+	}
 
-		void Exit(object sender, EventArgs e) {
-			Application.Exit();
-		}
+	void Exit(object sender, EventArgs e) {
+		Application.Exit();
 	}
 }

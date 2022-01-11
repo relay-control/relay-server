@@ -2,15 +2,16 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net5.0-windows</TargetFramework>
+    <TargetFramework>net6.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <DisableWinExeOutputInference>true</DisableWinExeOutputInference>
+    <ImplicitUsings>true</ImplicitUsings>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="GhostJoystick" Version="0.1.1" />
     <PackageReference Include="GhostKeyboard" Version="0.2.0" />
-    <PackageReference Include="WebApplication" Version="1.0.0" />
+    <PackageReference Include="WebApplication" Version="0.1.0" />
   </ItemGroup>
 
 </Project>
